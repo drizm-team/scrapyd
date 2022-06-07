@@ -115,3 +115,19 @@ class TestWebservice:
         assert site_with_egg.scheduler.calls == [['quotesbot', 'toscrape-css']]
         assert content['status'] == 'ok'
         assert 'jobid' in content
+
+    @mock.patch('scrapyd.webservice.get_spider_list',
+                new=fake_list_spiders_other)
+    def test_schedule_all(self, txrequest, site_with_egg):
+        endpoint = b'schedule.json'
+        txrequest.args = {
+            b'project': [b'quotesbot'],
+            b'spider': [b'__all__']
+        }
+        content = site_with_egg.children[endpoint].render_POST(txrequest)
+        # Ensure that not just one, but all available spiders get scheduled
+        assert site_with_egg.scheduler.calls == [['quotesbot', 'quotesbot'], ['quotesbot', 'toscrape-css']]
+        assert content['status'] == 'ok'
+        assert 'jobid' in content
+        # Multiple Job-IDs should be returned
+        assert isinstance(content.get("jobid"), list)

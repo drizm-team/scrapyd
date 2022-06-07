@@ -53,13 +53,22 @@ class Schedule(WsResource):
         version = args.get('_version', '')
         priority = float(args.pop('priority', 0))
         spiders = get_spider_list(project, version=version)
-        if spider not in spiders:
-            return {"status": "error", "message": "spider '%s' not found" % spider}
-        args['settings'] = settings
-        jobid = args.pop('jobid', uuid.uuid1().hex)
-        args['_job'] = jobid
-        self.root.scheduler.schedule(project, spider, priority=priority, **args)
-        return {"node_name": self.root.nodename, "status": "ok", "jobid": jobid}
+
+        def _schedule(_spider) -> str:
+            args['settings'] = settings
+            jobid = args.pop('jobid', uuid.uuid1().hex)
+            args['_job'] = jobid
+            self.root.scheduler.schedule(project, _spider, priority=priority, **args)
+            return jobid
+
+        if spider == "__all__":
+            job_id = [_schedule(s) for s in spiders]
+        else:
+            if spider not in spiders:
+                return {"status": "error", "message": "spider '%s' not found" % spider}
+            job_id = _schedule(spider)
+
+        return {"node_name": self.root.nodename, "status": "ok", "jobid": job_id}
 
 
 class Cancel(WsResource):
