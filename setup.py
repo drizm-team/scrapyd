@@ -2,7 +2,7 @@ import os.path
 
 from setuptools import setup
 
-with open('README.rst') as f:
+with open('README.md') as f:
     long_description = f.read()
 
 with open(os.path.join(os.path.dirname(__file__), 'scrapyd', 'VERSION')) as f:
